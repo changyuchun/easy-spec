@@ -11,19 +11,31 @@
 ```
 项目根目录/
 └── .easy-spec/
-    ├── spec/
-    │   ├── Spec.md               ← 规格文档（核心产出）
-    │   ├── Task-List.md          ← 开发任务清单
-    │   └── Spec-CHANGELOG.md     ← 变更记录（仅用户明确要求时）
+    ├── spec/                              ← 当前活跃需求（工作台）
+    │   ├── Spec.md                        ← 规格文档（核心产出）
+    │   ├── Task-List.md                   ← 开发任务清单
+    │   └── Spec-CHANGELOG.md             ← 变更记录（按需）
     ├── memory/
-    │   └── context.md            ← 每次会话启动时读取
-    └── archive/
-        └── 2026-06-25-用户标签系统/  ← 需求完成后归档
+    │   ├── context.md                     ← Level 0：当前会话进度
+    │   ├── index.md                       ← Level 1：所有历史需求索引
+    │   └── summaries/                     ← Level 2：每个需求的概要
+    │       ├── 用户标签系统.md
+    │       └── 订单状态机重构.md
+    └── archive/                           ← Level 3：完整归档（只读）
+        └── 2026-07-03-用户标签系统/
             ├── Spec.md
             ├── Task-List.md
-            ├── Spec-CHANGELOG.md
             └── retro.md
 ```
+
+### 四级记忆体系
+
+| 级别 | 文件 | 内容 | 加载时机 |
+|------|------|------|---------|
+| Level 0 | `memory/context.md` | 当前任务进度、阻塞、下一步 | 每次会话启动**自动** |
+| Level 1 | `memory/index.md` | 所有历史需求一行索引 | 每次会话启动**自动** |
+| Level 2 | `memory/summaries/<名>.md` | 需求概要：决策 + 实体 + 技术债 | 发现相关需求时**按需** |
+| Level 3 | `archive/<日期-名>/` | 完整 Spec + Task-List + retro | 用户显式要求时**显式** |
 
 ---
 
@@ -48,23 +60,25 @@
 ## 工作流总览
 
 ```
-一句话需求
-    ↓
+[启动]  自动加载 Level 0 context.md + Level 1 index.md
+        ↓ 扫描 index.md，发现相关历史需求 → 询问是否加载 Level 2 摘要
+        ↓
 Step 0  展示探讨计划，等用户确认
-    ↓
+        ↓
 Step 1  确认需求名称与核心骨架（每轮 3 个问题）
-    ↓
+        ↓
 Step 2  建立问题矩阵，逐域追问
-    ↓
-Step 3  输出 Spec.md（规格文档）
-    ↓
-Step 4  输出 Task-List.md（任务清单）
-    ↓
-Step 5  初始化 context.md（会话上下文）
-    ↓
-    ⬇ 日常开发：每次会话读取 context.md，更新进度
-    ↓
-Step 6  需求完成 → 归档到 archive/
+        ↓
+Step 3  输出 Spec.md
+        ↓
+Step 4  输出 Task-List.md
+        ↓
+Step 5  初始化 context.md
+        ↓
+        ⬇ 日常开发：每次会话读 context.md + index.md，更新进度
+        ↓
+Step 6  归档：Level 3 archive/ + 更新 Level 1 index.md + 生成 Level 2 summary
+               清空 context.md
 ```
 
 ---
@@ -342,15 +356,21 @@ T02 做完了，开始 T04。请更新 context.md。
 
 ## 每个步骤汇总
 
-| 步骤 | 触发 | 输入 | 输出 | 产出文件 |
-|------|------|------|------|---------|
-| 探讨计划 | 用户加载 easy-spec | 一句话需求 | 探讨计划（等用户确认）| 无 |
-| 追问 | 用户确认计划 | 每轮用户回答 | 问题矩阵更新、内部草稿 | 无（草稿内部维护）|
-| 输出 Spec | 问题矩阵覆盖完成 | 追问结果 | 完整规格文档 | `Spec.md` |
-| 输出 Task List | Spec 完成 + 用户需要执行 | Spec.md | 任务清单 | `Task-List.md` |
-| 初始化上下文 | Task List 完成 | Task-List.md | 会话启动文件 | `memory/context.md` |
-| 日常会话更新 | 用户指令 | 当前进度 | 进度更新 | `context.md`（更新）|
-| 归档 | 用户说"做完了" | 所有规格文件 | 归档 + 复盘 | `archive/<日期-名称>/` |
+| 步骤 | 触发 | 输入 | 产出文件 |
+|------|------|------|---------|
+| 启动加载 | `使用 easy-spec` 或 `读取 context.md` | — | 读取 `context.md`（L0）+ `index.md`（L1）|
+| 历史关联感知 | index.md 中发现相关需求 | index.md | 询问用户，确认后读取 `summaries/<名>.md`（L2）|
+| 探讨计划 | 用户确认启动 | 一句话需求 + L2 背景（如有）| 无（等用户确认）|
+| 追问 | 用户确认计划 | 每轮用户回答 | 无（内部草稿）|
+| 输出 Spec | 问题矩阵覆盖完成 | 追问结果 | `spec/Spec.md` |
+| 输出 Task List | Spec 完成 + 需要执行 | Spec.md | `spec/Task-List.md` |
+| 初始化上下文 | 进入开发阶段 | Spec + Task-List | `memory/context.md` |
+| 日常会话更新 | 用户指令 | 当前进度 | `context.md`（更新）|
+| 归档 Step 1 | 用户说"做完了" | 规格文件 | `archive/<日期-名>/`（L3）|
+| 归档 Step 2 | 归档触发 | retro 复盘信息 | `archive/<日期-名>/retro.md` |
+| 归档 Step 3 | 归档触发 | 需求信息 | `memory/index.md`（追加一行，L1）|
+| 归档 Step 4 | 归档触发 | Spec + retro | `memory/summaries/<名>.md`（L2）|
+| 归档 Step 5 | 归档触发 | — | `context.md`（清空）|
 
 ---
 
@@ -358,15 +378,17 @@ T02 做完了，开始 T04。请更新 context.md。
 
 ```
 easy-spec/
-├── README.md                         ← 本文件
-├── SKILL.md                          ← Skill 定义
+├── README.md                             ← 本文件
+├── SKILL.md                              ← Skill 定义
 ├── agents/
-│   └── openai.yaml                   ← Agent 配置
+│   └── openai.yaml                       ← Agent 配置
 └── references/
-    ├── spec-template.md              ← 规格文档模板
-    ├── task-list-template.md         ← 任务清单模板
-    ├── changelog-template.md         ← 变更记录模板
-    ├── session-context-template.md   ← 会话上下文模板
-    ├── archive-template.md           ← 归档与复盘模板
-    └── memory-template.md            ← 记忆系统设计参考
+    ├── spec-template.md                  ← 规格文档模板（Level 3 产出）
+    ├── task-list-template.md             ← 任务清单模板（Level 3 产出）
+    ├── changelog-template.md             ← 变更记录模板
+    ├── session-context-template.md       ← Level 0 会话上下文模板
+    ├── index-template.md                 ← Level 1 需求索引模板
+    ├── summary-template.md               ← Level 2 需求摘要模板
+    ├── archive-template.md               ← 归档流程模板（含四步写入）
+    └── memory-template.md                ← 四级记忆体系设计参考
 ```

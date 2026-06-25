@@ -43,20 +43,20 @@ description: 仅当用户显式写出 `$easy-spec`、`easy-spec` 或明确要求
 ```
 .easy-spec/
 ├── spec/
-│   ├── Spec.md               ← 本 skill 核心产出（功能规格）
-│   ├── Task-List.md          ← 本 skill 产出（开发任务清单）
+│   ├── Spec.md               ← 核心规格文档
+│   ├── Task-List.md          ← 开发任务清单
 │   └── Spec-CHANGELOG.md     ← 仅用户明确要求时追加
-└── memory/
-    └── context.md            ← 会话上下文（每次启动时加载）
-```
-
-归档目录（需求完成时）：
-```
-.easy-spec/archive/YYYY-MM-DD-<需求名>/
-├── Spec.md
-├── Task-List.md
-├── Spec-CHANGELOG.md         ← 如有
-└── retro.md                  ← 复盘记录
+├── memory/
+│   ├── context.md            ← Level 0：当前会话进度（每次启动自动加载）
+│   ├── index.md              ← Level 1：所有历史需求索引（每次启动自动加载）
+│   └── summaries/            ← Level 2：每个需求的概要（按需加载）
+│       └── <需求名称>.md
+└── archive/                  ← Level 3：完整归档（显式加载）
+    └── YYYY-MM-DD-<需求名>/
+        ├── Spec.md
+        ├── Task-List.md
+        ├── Spec-CHANGELOG.md
+        └── retro.md
 ```
 
 明确不要默认生成：
@@ -73,20 +73,38 @@ description: 仅当用户显式写出 `$easy-spec`、`easy-spec` 或明确要求
 - 如果目录不存在，先创建该目录，再在其中生成或更新文档
 - 非用户明确要求时，不把 spec 文档散落写到项目根目录
 
-然后按以下顺序扫描现有文件：
+### 第一步：加载记忆（固定顺序）
 
-1. `.easy-spec/spec/Spec.md`
-2. `.easy-spec/memory/context.md`
-3. `*spec*.md`、`*需求*.md`、`*prd*.md`（宽松匹配）
+```
+1. 读取 .easy-spec/memory/context.md    → Level 0，了解当前进度
+2. 读取 .easy-spec/memory/index.md      → Level 1，了解所有历史需求
+   （index.md 不存在则跳过，说明是首个需求）
+```
 
-判定规则：
+### 第二步：判断模式
 
 | Spec.md | context.md | 判定 |
 |---------|-----------|------|
-| 存在 | 存在 | **迭代模式** + 先读取 context.md 了解当前进度 |
-| 存在 | 不存在 | **迭代模式**（规格存在但未进入开发）|
-| 不存在 | 存在但为空 | 上一个需求已归档，进入 **0-1 模式** |
-| 不存在 | 不存在 | 全新需求，进入 **0-1 模式** |
+| 存在 | 有内容 | **迭代模式**，context.md 已给出当前进度 |
+| 存在 | 空或不存在 | **迭代模式**，规格存在但未进入开发 |
+| 不存在 | 空或不存在 | **0-1 模式**，全新需求 |
+
+### 第三步：历史关联感知（仅 0-1 模式）
+
+加载了 index.md 后，根据用户描述的新需求，扫描 index.md 中所有历史条目：
+- 对比新需求描述与历史需求的「一句话描述 + 核心技术/领域」
+- 发现语义相关的历史需求（如上下游关系、同领域、技术复用）
+
+发现相关时，**主动告知用户并询问**：
+```
+发现历史需求【用户标签系统】可能与本次相关（推送系统的上游依赖）。
+要加载它的摘要作为背景参考吗？（推荐：是）
+```
+
+用户确认后，读取 `.easy-spec/memory/summaries/<需求名称>.md`（Level 2）。
+Level 2 摘要作为背景参考，在追问和成文阶段自动融入，避免重复设计或踩历史的坑。
+
+用户拒绝或无相关历史：直接进入追问阶段。
 
 ## 决策账本与渐进草稿
 
@@ -285,16 +303,27 @@ easy-spec 不会自动感知进度变化，必须由用户明确触发更新。
 
 触发条件：用户明确说"这个需求做完了"、"可以归档了"、"帮我归档"。
 
-执行流程：
-1. 读取 [references/archive-template.md](./references/archive-template.md)
-2. 在 `.easy-spec/archive/` 下创建 `YYYY-MM-DD-<需求名>/` 目录
-3. 把 `Spec.md`、`Task-List.md`、`Spec-CHANGELOG.md`（如有）复制进去
-4. 向用户询问复盘信息（如果来不及详细复盘，允许用户说"先生成空模板"）：
-   - 实际交付和规格的差异在哪里
-   - 哪些决策回头看是对的，哪些需要改
-   - 哪些技术债遗留下来了
-5. 生成 `retro.md`（复盘记录）
-6. 清空 `.easy-spec/memory/context.md`（重置为空，等待下一个需求）
+读取 [references/archive-template.md](./references/archive-template.md) 后，按以下顺序执行：
+
+**Step 1 — 创建 Level 3 归档**
+在 `.easy-spec/archive/YYYY-MM-DD-<需求名>/` 下复制 Spec.md、Task-List.md、Spec-CHANGELOG.md（如有）。
+
+**Step 2 — 生成 retro.md**
+向用户追问复盘信息（允许说"先生成空模板"跳过）：
+- 实际交付和规格的差异
+- 哪些决策回头看是对的，哪些需要改
+- 遗留了哪些技术债
+
+**Step 3 — 更新 Level 1 索引**
+在 `.easy-spec/memory/index.md` 末尾追加一行（文件不存在则先创建表头）。
+字段：需求名称、完成日期、一句话描述、核心技术/领域、摘要链接。
+
+**Step 4 — 生成 Level 2 摘要**
+读取 [references/summary-template.md](./references/summary-template.md)，在 `.easy-spec/memory/summaries/<需求名称>.md` 生成摘要。
+内容来源：Spec.md 的核心实体 + retro.md 的决策与教训 + context.md 的决策记录。
+
+**Step 5 — 清空 context.md**
+将 `.easy-spec/memory/context.md` 重置为空模板，等待下一个需求。
 
 注意：`.easy-spec/spec/` 中的原文件**保留不动**，作为下次迭代的起点。
 
@@ -317,11 +346,18 @@ easy-spec 不会自动感知进度变化，必须由用户明确触发更新。
 
 ## 记忆系统
 
-读取 [references/memory-template.md](./references/memory-template.md) 了解完整的两层记忆体系设计。
+读取 [references/memory-template.md](./references/memory-template.md) 了解完整的四级记忆体系设计。
 
-简要原则：
-- `.easy-spec/memory/context.md` 负责当前需求的开发上下文，随需求变化频繁更新
-- Claude Code 全局记忆负责跨需求的经验和偏好，由 Claude 自动写入，不随需求归档而清空
+四级概览：
+
+| 级别 | 文件 | 内容 | 加载时机 | 写入时机 |
+|------|------|------|---------|---------|
+| Level 0 | `memory/context.md` | 当前会话进度 | 每次启动自动加载 | 每次会话更新，归档时清空 |
+| Level 1 | `memory/index.md` | 历史需求索引（一行一个）| 每次启动自动加载 | 每次归档时追加一行 |
+| Level 2 | `memory/summaries/<名>.md` | 需求概要（决策+实体+技术债）| 发现相关需求时按需加载 | 每次归档时生成 |
+| Level 3 | `archive/<日期-名>/` | 完整归档（Spec+retro）| 用户显式要求时加载 | 归档时创建，只读 |
+
+第五层：Claude Code 全局记忆（`~/.claude/projects/.../memory/`）负责跨需求、跨项目的用户偏好和经验，由 Claude 自动写入，不归 easy-spec 管理。
 
 ## 完成标准
 
