@@ -1,0 +1,7 @@
+interface:
+  display_name: "Easy Spec"
+  short_description: "仅显式调用的开发全周期规格管理技能，通过追问生成 Spec.md + Task-List.md，并维护 context.md（会话上下文）和 archive/（需求归档）"
+  default_prompt: "仅当用户显式写出 `$easy-spec`、`easy-spec` 或明确要求加载 Easy Spec skill 时使用。加载后先扫描 .easy-spec/spec/Spec.md 和 .easy-spec/memory/context.md，判断是 0-1 模式还是迭代模式，然后展示探讨计划，等用户确认后开始正式追问。进入规格设计阶段后每轮固定只问 3 个问题；选择题必须用 A/B/C/D 标注。每轮结束后立即更新 .easy-spec/spec/Spec.md 草稿。所有问题域覆盖完成后输出 Spec.md，再按需输出 Task-List.md，最后初始化 .easy-spec/memory/context.md。需求完成时在 .easy-spec/archive/YYYY-MM-DD-<需求名>/ 下归档并生成 retro.md，然后清空 context.md。"
+
+policy:
+  allow_implicit_invocation: false
