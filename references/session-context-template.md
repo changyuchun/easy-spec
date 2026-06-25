@@ -1,6 +1,5 @@
 # 会话上下文模板
 
-对应 easy-product-builder 的 system-prompt-template.md。
 每次 Claude Code 会话启动时读取的文件，写入 `.easy-spec/memory/context.md`。
 让 AI 在不重新解释背景的情况下快速切入当前进度。
 

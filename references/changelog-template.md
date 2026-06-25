@@ -1,6 +1,5 @@
 # Spec 变更记录模板
 
-对应 easy-product-builder 的 changelog-template.md。
 仅在用户明确要求保留迭代变更记录时使用。
 
 ---

@@ -1,6 +1,5 @@
 # 归档模板
 
-对应 easy-product-builder 的 ui-prompt-template.md。
 需求完成后执行归档，把本次交付的所有规格和复盘写入 `.easy-spec/archive/`。
 
 仅当用户明确说"这个需求做完了"或"归档这个需求"时使用。

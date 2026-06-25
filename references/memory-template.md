@@ -1,6 +1,5 @@
 # 记忆系统设计模板
 
-对应 easy-product-builder 的 wireframe-template.md。
 描述 easy-spec 的两层记忆体系，以及如何在 Claude Code 全局记忆中沉淀跨需求经验。
 
 ---

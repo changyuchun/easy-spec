@@ -1,6 +1,5 @@
 # Task List 模板
 
-对应 easy-product-builder 的 ui-spec-template.md。
 easy-spec 的第二核心产出，把 Spec.md 中定义的功能拆解成可执行、可追踪的开发任务。
 
 只有需求包含明确的开发执行阶段时才生成本文档。

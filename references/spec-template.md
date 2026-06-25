@@ -1,6 +1,5 @@
 # Spec 模板
 
-对应 easy-product-builder 的 product-spec-template.md。
 easy-spec 的核心产出文档，写清楚"要做什么、怎么运作、边界在哪里"。
 
 ---
